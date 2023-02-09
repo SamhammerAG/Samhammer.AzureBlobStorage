@@ -19,7 +19,7 @@ namespace Samhammer.AzureBlobStorage.Test
     {
         // Create a storage account and configure the connection string here
         // Warning: This test creates and deletes a container named test
-        private const string ConnectionString = "DefaultEndpointsProtocol=https;AccountName=xxx;AccountKey=xxx;EndpointSuffix=core.windows.net";
+        private const string ConnectionString = "";
 
         private readonly IAzureBlobStorageService<IAzureBlobStorageClientFactory> _service;
 
@@ -27,6 +27,11 @@ namespace Samhammer.AzureBlobStorage.Test
 
         public IntegrationTest()
         {
+            if (string.IsNullOrEmpty(ConnectionString))
+            {
+                return;
+            }
+
             var clientFactory = Substitute.For<IAzureBlobStorageClientFactory>();
             clientFactory.GetClient().Returns(new BlobServiceClient(ConnectionString));
 
