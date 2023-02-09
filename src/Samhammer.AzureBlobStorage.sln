@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32002.185
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Samhammer.AzureBlobStorage", "Samhammer.AzureBlobStorage\Samhammer.AzureBlobStorage.csproj", "{939370C0-77CD-426F-8C70-05D78F9C4C1E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Samhammer.AzureBlobStorage.Test", "Samhammer.AzureBlobStorage.Test\Samhammer.AzureBlobStorage.Test.csproj", "{2F144BB7-60AC-45B5-992C-FB1CAF5E86FC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{939370C0-77CD-426F-8C70-05D78F9C4C1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{939370C0-77CD-426F-8C70-05D78F9C4C1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{939370C0-77CD-426F-8C70-05D78F9C4C1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{939370C0-77CD-426F-8C70-05D78F9C4C1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F144BB7-60AC-45B5-992C-FB1CAF5E86FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F144BB7-60AC-45B5-992C-FB1CAF5E86FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F144BB7-60AC-45B5-992C-FB1CAF5E86FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F144BB7-60AC-45B5-992C-FB1CAF5E86FC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D802E1EB-5043-418D-8F96-BBC0334F07D2}
+	EndGlobalSection
+EndGlobal
