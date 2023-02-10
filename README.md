@@ -26,6 +26,15 @@ This package provides access to the azure blob storage over the azure sdk. It in
   },
 ```
 
+#### How to inject the service
+
+With the initialization described above, you can inject the service like that:
+```csharp
+   public MyClass(IAzureBlobStorageService<IDefaultAzureBlobStorageClientFactory> storageService)
+   {
+   }
+```
+
 ### Connect to multiple storages
 
 The samples above are suitable if you only need one storage that is connected to your application. Having multiple storages is also supported by implementing multiple client factories.
@@ -33,7 +42,7 @@ The samples above are suitable if you only need one storage that is connected to
 ```csharp
    public class MyClientFactory : IMyClientFactory
    {
-       private IOptions<AzureBlobStorageOptions> Options { get; }
+       private IOptions<MyStorageOptions> Options { get; }
 
        public MyClientFactory(IOptions<MyStorageOptions> options)
        {
@@ -57,6 +66,14 @@ The client and a matching service is then registered like that:
 
    builder.services.AddSingleton<IMyClientFactory, MyClientFactory>();
    builder.services.AddSingleton<IAzureBlobStorageService<IMyClientFactory>, AzureBlobStorageService<IMyClientFactory>>();
+```
+
+To use it just inject it like that:
+
+```csharp
+   public MyClass(IAzureBlobStorageService<IMyClientFactory> storageService)
+   {
+   }
 ```
 
 ## Contribute
