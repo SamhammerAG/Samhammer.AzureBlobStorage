@@ -12,10 +12,13 @@ namespace Samhammer.AzureBlobStorage.Services
 {
     public class AzureBlobStorageService<T> : IAzureBlobStorageService<T> where T : IAzureBlobStorageClientFactory
     {
+        private readonly string _defaultContainerName;
+
         private readonly BlobServiceClient _client;
 
         public AzureBlobStorageService(T blobStorageClientFactory)
         {
+            _defaultContainerName = blobStorageClientFactory.GetDefaultContainerName();
             _client = blobStorageClientFactory.GetClient();
         }
 
@@ -34,21 +37,21 @@ namespace Samhammer.AzureBlobStorage.Services
             }
         }
 
-        public async Task CreateContainerIfNotExistsAsync(string containerName)
+        public async Task CreateContainerIfNotExistsAsync(string containerName = null)
         {
             var containerClient = await GetContainerClient(containerName, true);
 
             await containerClient.CreateIfNotExistsAsync();
         }
 
-        public async Task DeleteContainerAsync(string containerName)
+        public async Task DeleteContainerAsync(string containerName = null)
         {
             var containerClient = await GetContainerClient(containerName);
 
             await containerClient.DeleteAsync();
         }
 
-        public async IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName)
+        public async IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null)
         {
             var containerClient = await GetContainerClient(containerName);
             var blobs = containerClient.GetBlobsAsync();
@@ -60,7 +63,7 @@ namespace Samhammer.AzureBlobStorage.Services
             }
         }
 
-        public async Task<BlobContract> GetBlobContentsAsync(string containerName, string blobName)
+        public async Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null)
         {
             var containerClient = await GetContainerClient(containerName);
             var blobClient = await GetBlobClient(containerClient, blobName);
@@ -71,7 +74,7 @@ namespace Samhammer.AzureBlobStorage.Services
             return ContractMapper.ToBlobContract(blobClient.Name, properties, stream);
         }
 
-        public async Task UploadBlobAsync(string containerName, string blobName, string contentType, Stream content)
+        public async Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null)
         {
             var containerClient = await GetContainerClient(containerName);
             var blobClient = await GetBlobClient(containerClient, blobName, true);
@@ -80,7 +83,7 @@ namespace Samhammer.AzureBlobStorage.Services
             await blobClient.UploadAsync(content, options);
         }
 
-        public async Task DeleteBlobAsync(string containerName, string blobName)
+        public async Task DeleteBlobAsync(string blobName, string containerName = null)
         {
             var containerClient = await GetContainerClient(containerName);
             var blobClient = await GetBlobClient(containerClient, blobName);
@@ -88,8 +91,10 @@ namespace Samhammer.AzureBlobStorage.Services
             await blobClient.DeleteAsync();
         }
 
-        public async Task<BlobContainerClient> GetContainerClient(string containerName, bool ignoreNonExistentContainer = false)
+        public async Task<BlobContainerClient> GetContainerClient(string containerName = null, bool ignoreNonExistentContainer = false)
         {
+            containerName ??= _defaultContainerName;
+
             var containerClient = _client.GetBlobContainerClient(containerName);
 
             if (!ignoreNonExistentContainer && !await containerClient.ExistsAsync())
@@ -113,22 +118,26 @@ namespace Samhammer.AzureBlobStorage.Services
         }
     }
 
-    public interface IAzureBlobStorageService<T> where T : IAzureBlobStorageClientFactory
+    public interface IAzureBlobStorageService
     {
         public string GetStorageAccountName();
 
         public IAsyncEnumerable<StorageContainerContract> GetContainersAsync();
 
-        public Task CreateContainerIfNotExistsAsync(string containerName);
+        public Task CreateContainerIfNotExistsAsync(string containerName = null);
 
-        public Task DeleteContainerAsync(string containerName);
+        public Task DeleteContainerAsync(string containerName = null);
 
-        public IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName);
+        public IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null);
 
-        public Task<BlobContract> GetBlobContentsAsync(string containerName, string blobName);
+        public Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
 
-        public Task UploadBlobAsync(string containerName, string blobName, string contentType, Stream content);
+        public Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null);
 
-        public Task DeleteBlobAsync(string containerName, string blobName);
+        public Task DeleteBlobAsync(string blobName, string containerName = null);
+    }
+
+    public interface IAzureBlobStorageService<T> : IAzureBlobStorageService where T : IAzureBlobStorageClientFactory
+    {
     }
 }

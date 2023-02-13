@@ -4,8 +4,7 @@ using Azure.Storage.Blobs;
 using HealthChecks.AzureStorage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
-using Samhammer.AzureBlobStorage.Options;
+using Samhammer.AzureBlobStorage.Client;
 
 namespace Samhammer.AzureBlobStorage
 {
@@ -19,14 +18,31 @@ namespace Samhammer.AzureBlobStorage
             IEnumerable<string> tags = null,
             TimeSpan? timeout = null)
         {
-            IHealthCheck Factory(IServiceProvider sp) => GetAzureBlobStorageHealthCheck(sp, containerName);
+            IHealthCheck Factory(IServiceProvider sp) => GetAzureBlobStorageHealthCheck<IDefaultAzureBlobStorageClientFactory>(sp, containerName);
             return builder.Add(new HealthCheckRegistration(name ?? "azurestorage", Factory, failureStatus, tags, timeout));
         }
 
-        private static AzureBlobStorageHealthCheck GetAzureBlobStorageHealthCheck(IServiceProvider serviceProvider, string containerName)
+        public static IHealthChecksBuilder AddAzureBlobStorage<TFactoryInterface>(
+            this IHealthChecksBuilder builder,
+            string containerName = null,
+            string name = null,
+            HealthStatus? failureStatus = null,
+            IEnumerable<string> tags = null,
+            TimeSpan? timeout = null)
+                where TFactoryInterface : class, IAzureBlobStorageClientFactory
         {
-            var options = serviceProvider.GetRequiredService<IOptions<AzureBlobStorageOptions>>();
-            return new AzureBlobStorageHealthCheck(options.Value.ConnectionString, containerName, new BlobClientOptions { Retry = { MaxRetries = 0 } });
+            IHealthCheck Factory(IServiceProvider sp) => GetAzureBlobStorageHealthCheck<IDefaultAzureBlobStorageClientFactory>(sp, containerName);
+            return builder.Add(new HealthCheckRegistration(name ?? "azurestorage", Factory, failureStatus, tags, timeout));
+        }
+
+        private static AzureBlobStorageHealthCheck GetAzureBlobStorageHealthCheck<TFactoryInterface>(IServiceProvider serviceProvider, string containerName)
+            where TFactoryInterface : class, IAzureBlobStorageClientFactory
+        {
+            var clientFactory = serviceProvider.GetRequiredService<TFactoryInterface>();
+            var defaultContainerName = clientFactory.GetDefaultContainerName();
+            var client = clientFactory.GetClient(new BlobClientOptions { Retry = { MaxRetries = 0 } });
+
+            return new AzureBlobStorageHealthCheck(client, new AzureBlobStorageHealthCheckOptions { ContainerName = containerName ?? defaultContainerName });
         }
     }
 }

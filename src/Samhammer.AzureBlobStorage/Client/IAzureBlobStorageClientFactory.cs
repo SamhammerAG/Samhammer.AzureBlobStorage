@@ -4,6 +4,8 @@ namespace Samhammer.AzureBlobStorage.Client
 {
     public interface IAzureBlobStorageClientFactory
     {
-        BlobServiceClient GetClient();
+        string GetDefaultContainerName();
+
+        BlobServiceClient GetClient(BlobClientOptions options = null);
     }
 }

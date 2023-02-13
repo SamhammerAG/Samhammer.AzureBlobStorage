@@ -13,9 +13,14 @@ namespace Samhammer.AzureBlobStorage.Client
             Options = options;
         }
 
-        public BlobServiceClient GetClient()
+        public BlobServiceClient GetClient(BlobClientOptions options = null)
         {
-            return new BlobServiceClient(Options.Value.ConnectionString);
+            return new BlobServiceClient(Options.Value.ConnectionString, options);
+        }
+
+        public string GetDefaultContainerName()
+        {
+            return Options.Value.ContainerName;
         }
     }
 

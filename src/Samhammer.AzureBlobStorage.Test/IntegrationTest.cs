@@ -18,11 +18,11 @@ namespace Samhammer.AzureBlobStorage.Test
     public class IntegrationTest
     {
         // Create a storage account and configure the connection string here
-        // Warning: This test creates and deletes a container named test
+        // Warning: This test creates and deletes a container named test and testdefault
         private const string ConnectionString = "";
+        private const string DefaultContainerName = "testdefault";
 
         private readonly IAzureBlobStorageService<IAzureBlobStorageClientFactory> _service;
-
         private readonly Func<EquivalencyAssertionOptions<BlobInfoContract>, EquivalencyAssertionOptions<BlobInfoContract>> _comparisonOptions;
 
         public IntegrationTest()
@@ -33,11 +33,12 @@ namespace Samhammer.AzureBlobStorage.Test
             }
 
             var clientFactory = Substitute.For<IAzureBlobStorageClientFactory>();
+            clientFactory.GetDefaultContainerName().Returns(DefaultContainerName);
             clientFactory.GetClient().Returns(new BlobServiceClient(ConnectionString));
 
             _service = new AzureBlobStorageService<IAzureBlobStorageClientFactory>(clientFactory);
 
-            _comparisonOptions = options => options
+            _comparisonOptions = o => o
                 .Using<DateTimeOffset>(ctx =>
                     ctx.Subject.Should().BeCloseTo(ctx.Expectation, TimeSpan.FromSeconds(60)))
                 .WhenTypeIs<DateTimeOffset>();
@@ -49,7 +50,7 @@ namespace Samhammer.AzureBlobStorage.Test
             Skip.IfNot(Debugger.IsAttached, "Only for debugging with configured connection string");
 
             // Arrange
-            var expectedName = new Regex("AccountName=(.*)[a-zA-Z];")
+            var expectedName = new Regex("AccountName=([a-zA-Z]*);")
                 .Match(ConnectionString)
                 .Groups[1]
                 .ToString();
@@ -61,13 +62,16 @@ namespace Samhammer.AzureBlobStorage.Test
             actual.Should().Be(expectedName);
         }
 
-        [SkippableFact]
-        public async Task TestEntireProcess()
+        [SkippableTheory]
+        [InlineData(null)] // Test default container
+        [InlineData("test")] // Specific container
+        public async Task TestEntireProcess(string containerName)
         {
             Skip.IfNot(Debugger.IsAttached, "Only for debugging with configure connection string");
 
+            var expectedContainerName = containerName ?? DefaultContainerName;
+
             // Arrange
-            var containerName = "test";
             var testFileName = "testupload.txt";
             var testFileContentType = "text/plain";
             await using var testFileReadStream = new FileStream(testFileName, FileMode.Open, FileAccess.Read);
@@ -76,11 +80,10 @@ namespace Samhammer.AzureBlobStorage.Test
             await _service.CreateContainerIfNotExistsAsync(containerName);
             var containers = await _service.GetContainersAsync().ToListAsync();
 
-            containers.Should().HaveCount(1);
-            containers.First().Should().BeEquivalentTo(new StorageContainerContract { Name = containerName });
+            containers.Should().Contain(i => i.Name == expectedContainerName);
 
             // Upload a file
-            await _service.UploadBlobAsync(containerName, testFileName, testFileContentType, testFileReadStream);
+            await _service.UploadBlobAsync(testFileName, testFileContentType, testFileReadStream, containerName);
 
             // Load file list and verify that the upload is there
             var files = await _service.ListBlobsInContainerAsync(containerName).ToListAsync();
@@ -100,7 +103,7 @@ namespace Samhammer.AzureBlobStorage.Test
                 _comparisonOptions);
 
             // Load individual file and verify infos
-            var file = await _service.GetBlobContentsAsync(containerName, testFileName);
+            var file = await _service.GetBlobContentsAsync(testFileName, containerName);
 
             file.Should().NotBeNull();
             file.Should().BeEquivalentTo(
@@ -117,7 +120,7 @@ namespace Samhammer.AzureBlobStorage.Test
                 _comparisonOptions);
 
             // Delete blob and verify it's gone
-            await _service.DeleteBlobAsync(containerName, testFileName);
+            await _service.DeleteBlobAsync(testFileName, containerName);
             var filesAfterDeletion = await _service.ListBlobsInContainerAsync(containerName).ToListAsync();
 
             filesAfterDeletion.Count.Should().Be(0);
@@ -126,7 +129,7 @@ namespace Samhammer.AzureBlobStorage.Test
             await _service.DeleteContainerAsync(containerName);
             var containersAfterDeletion = await _service.GetContainersAsync().ToListAsync();
 
-            containersAfterDeletion.Count.Should().Be(0);
+            containersAfterDeletion.Should().NotContain(i => i.Name == expectedContainerName);
         }
     }
 }

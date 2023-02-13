@@ -13,7 +13,7 @@ namespace Samhammer.AzureBlobStorage
         {
             services.Configure<AzureBlobStorageOptions>(configuration.GetSection(nameof(AzureBlobStorageOptions)));
 
-            services.RegisterDefaultAzureBlobStorage();
+            RegisterAzureBlobStorage<IDefaultAzureBlobStorageClientFactory, DefaultAzureBlobStorageClientFactory>(services, true);
 
             return services;
         }
@@ -22,15 +22,31 @@ namespace Samhammer.AzureBlobStorage
         {
             services.Configure(configure);
 
-            services.RegisterDefaultAzureBlobStorage();
+            RegisterAzureBlobStorage<IDefaultAzureBlobStorageClientFactory, DefaultAzureBlobStorageClientFactory>(services, true);
 
             return services;
         }
 
-        private static void RegisterDefaultAzureBlobStorage(this IServiceCollection services)
+        public static IServiceCollection AddAzureBlobStorage<TFactoryInterface, TFactoryImpl>(this IServiceCollection services)
+            where TFactoryInterface : class, IAzureBlobStorageClientFactory
+            where TFactoryImpl : class, TFactoryInterface
         {
-            services.AddSingleton<IDefaultAzureBlobStorageClientFactory, DefaultAzureBlobStorageClientFactory>();
-            services.AddSingleton<IAzureBlobStorageService<IDefaultAzureBlobStorageClientFactory>, AzureBlobStorageService<IDefaultAzureBlobStorageClientFactory>>();
+            RegisterAzureBlobStorage<TFactoryInterface, TFactoryImpl>(services);
+
+            return services;
+        }
+
+        private static void RegisterAzureBlobStorage<TFactoryInterface, TFactoryImpl>(IServiceCollection services, bool registerAsDefault = false)
+            where TFactoryInterface : class, IAzureBlobStorageClientFactory
+            where TFactoryImpl : class, TFactoryInterface
+        {
+            services.AddSingleton<TFactoryInterface, TFactoryImpl>();
+            services.AddSingleton<IAzureBlobStorageService<TFactoryInterface>, AzureBlobStorageService<TFactoryInterface>>();
+
+            if (registerAsDefault)
+            {
+                services.AddSingleton<IAzureBlobStorageService, AzureBlobStorageService<TFactoryInterface>>();
+            }
         }
     }
 }
