@@ -79,8 +79,12 @@ foreach (var f in files)
 ### Get blob
 ```csharp
 //Get the blob content. If not container name is specifeid the default container is used.
-//Note: The BlobContract contains all fields of BlobInfoContract + Content with a read stream.
 Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
+
+public class BlobContract : BlobInfoContract
+{
+    public Stream Content { get; set; }
+}
 ```
 
 Example:
