@@ -126,7 +126,7 @@ Task DeleteContainerAsync(string containerName = null);
 string GetStorageAccountName()
 ```
 
-### Connect to multiple storages
+## How to use multiple storages this in your project:
 Having multiple storages is also supported by implementing multiple client factories.
 
 ```csharp
