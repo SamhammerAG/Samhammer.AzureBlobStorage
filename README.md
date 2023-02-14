@@ -128,9 +128,9 @@ The samples above are suitable if you only need one storage that is connected to
            Options = options;
        }
 
-       public BlobServiceClient GetClient()
+       public BlobServiceClient GetClient(BlobClientOptions options = null)
        {
-           return new BlobServiceClient(Options.Value.ConnectionString);
+           return new BlobServiceClient(Options.Value.ConnectionString, options);
        }
 
        public string GetDefaultContainerName()
