@@ -123,43 +123,41 @@ string GetStorageAccountName()
 ```
 
 ### Connect to multiple storages
-
-The samples above are suitable if you only need one storage that is connected to your application. Having multiple storages is also supported by implementing multiple client factories.
+Having multiple storages is also supported by implementing multiple client factories.
 
 ```csharp
-   public class MyClientFactory : IMyClientFactory
+public class MyClientFactory : IMyClientFactory
+{
+   private IOptions<MyStorageOptions> Options { get; }
+
+   public MyClientFactory(IOptions<MyStorageOptions> options)
    {
-       private IOptions<MyStorageOptions> Options { get; }
-
-       public MyClientFactory(IOptions<MyStorageOptions> options)
-       {
-           Options = options;
-       }
-
-       public BlobServiceClient GetClient(BlobClientOptions options = null)
-       {
-           return new BlobServiceClient(Options.Value.ConnectionString, options);
-       }
-
-       public string GetDefaultContainerName()
-       {
-            return Options.Value.ContainerName;
-       }
+       Options = options;
    }
 
-   public interface IMyClientFactory : IAzureBlobStorageClientFactory
+   public BlobServiceClient GetClient(BlobClientOptions options = null)
    {
+       return new BlobServiceClient(Options.Value.ConnectionString, options);
    }
+
+   public string GetDefaultContainerName()
+   {
+        return Options.Value.ContainerName;
+   }
+}
+
+public interface IMyClientFactory : IAzureBlobStorageClientFactory
+{
+}
 ```
 The client and a matching service is then registered like that:
 
 ```csharp
    var builder = WebApplication.CreateBuilder(args);
 
+   builder.Services.AddOptions<MyStorageOptions>();
    builder.Services.AddAzureBlobStorage<IMyClientFactory, MyClientFactory>(builder.Configuration);
-
-   builder.Services.AddHealthChecks()
-      .AddAzureBlobStorage<IMyClientFactory>()
+   builder.Services.AddHealthChecks().AddAzureBlobStorage<IMyClientFactory>()
 ```
 
 To use it just inject it like that:
