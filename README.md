@@ -157,19 +157,19 @@ public interface IMyClientFactory : IAzureBlobStorageClientFactory
 The client and a matching service is then registered like that:
 
 ```csharp
-   var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-   builder.Services.AddOptions<MyStorageOptions>();
-   builder.Services.AddAzureBlobStorage<IMyClientFactory, MyClientFactory>(builder.Configuration);
-   builder.Services.AddHealthChecks().AddAzureBlobStorage<IMyClientFactory>()
+builder.Services.AddOptions<MyStorageOptions>();
+builder.Services.AddAzureBlobStorage<IMyClientFactory, MyClientFactory>(builder.Configuration);
+builder.Services.AddHealthChecks().AddAzureBlobStorage<IMyClientFactory>()
 ```
 
 To use it just inject it like that:
 
 ```csharp
-   public MyClass(IAzureBlobStorageService<IMyClientFactory> storageService)
-   {
-   }
+public MyClass(IAzureBlobStorageService<IMyClientFactory> storageService)
+{
+}
 ```
 
 
