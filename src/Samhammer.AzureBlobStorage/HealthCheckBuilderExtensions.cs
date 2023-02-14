@@ -31,7 +31,7 @@ namespace Samhammer.AzureBlobStorage
             TimeSpan? timeout = null)
                 where TFactoryInterface : class, IAzureBlobStorageClientFactory
         {
-            IHealthCheck Factory(IServiceProvider sp) => GetAzureBlobStorageHealthCheck<IDefaultAzureBlobStorageClientFactory>(sp, containerName);
+            IHealthCheck Factory(IServiceProvider sp) => GetAzureBlobStorageHealthCheck<TFactoryInterface>(sp, containerName);
             return builder.Add(new HealthCheckRegistration(name ?? "azurestorage", Factory, failureStatus, tags, timeout));
         }
 
