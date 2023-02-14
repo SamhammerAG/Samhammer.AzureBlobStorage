@@ -1,118 +1,126 @@
 ﻿# Samhammer.AzureBlobStorage
 
-## Usage
 This package provides access to the azure blob storage over the azure sdk. It includes basic access functionality to upload and download files.
 
-#### How to add this to your project:
+## How to add this to your project:
 - reference this package to your main project: https://www.nuget.org/packages/Samhammer.AzureBlobStorage/
 - initialize the connection in Program.cs
 - add the health check to Program.cs (optional)
 - add the connection configuration to the appsettings (if the lib is initialized with IConfiguration in Program.cs)
+- inject IAzureBlobStorageService to your service
 
 #### Example Program.cs:
 ```csharp
-   var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-   builder.Services.AddDefaultAzureBlobStorage(builder.Configuration);
-
-   builder.Services.AddHealthChecks()
-      .AddDefaultAzureBlobStorage()
+builder.Services.AddDefaultAzureBlobStorage(builder.Configuration);
+builder.Services.AddHealthChecks().AddDefaultAzureBlobStorage()
 ```
 
 #### Example appsettings configuration:
 ```json
-  "AzureBlobStorageOptions": {
-    "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=xxxxxx;AccountKey=xxxxxx;EndpointSuffix=core.windows.net",
-    "ContainerName": "DefaultContainerName"
-  },
+"AzureBlobStorageOptions": {
+  "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=xxxxxx;AccountKey=xxxxxx;EndpointSuffix=core.windows.net",
+  "ContainerName": "DefaultContainerName"
+},
 ```
 
-#### How to inject the service
-
-With the initialization described above, you can inject the service like that:
+#### Example to inject the service
 ```csharp
-   public MyClass(IAzureBlobStorageService storageService)
-   {
-   }
+public MyClass(IAzureBlobStorageService storageService)
+{
+}
 ```
 
-#### Usage
+## How to use this in your project:
+Here are some examples how to use the IAzureBlobStorageService in your project.
 
-The following methods are provided:
-
-##### string GetStorageAccountName()
-Returns the name of the storage account. This is the name configured in the connection string.
-
-##### IAsyncEnumerable<StorageContainerContract> GetContainersAsync();
-Returns a list of containers that are currently configured in the storage account
-
-##### Task CreateContainerIfNotExistsAsync(string containerName = null);
-Creates a container with the specified name or if no container name is specified the default container.
-
-##### Task DeleteContainerAsync(string containerName = null);
-Deletes a specified container or if no container name is specified the default container.
-
-##### IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null);
-
-Lists all files inside the specified container or if not specified the default container.
-
-Usage:
+### Upload blob
 ```csharp
-   var files = await _service.ListBlobsInContainerAsync(containerName).ToListAsync(); // with nuget package System.Linq.Async
-
-   foreach (var f in files)
-   {
-       Console.WriteLine(f.Name);
-   }
+//Upload a file to the specified container or the default container if not specified.
+Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null);
 ```
 
-Fields:
+Example:
 ```csharp
-    public class BlobInfoContract
-    {
-        public string Name { get; set; }
+await _service.CreateContainerIfNotExistsAsync(containerName);
 
-        public string BlobType { get; set; }
-
-        public string ContentEncoding { get; set; }
-
-        public string ContentType { get; set; }
-
-        public long? Size { get; set; }
-
-        public DateTimeOffset? DateCreated { get; set; }
-
-        public string AccessTier { get; set; }
-    }
+await using var inputStream = new FileStream("file.txt", FileMode.Open, FileAccess.Read);
+await _service.UploadBlobAsync("file.txt", "text/plain", inputStream, containerName);
 ```
 
-##### Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
-Get the blob content. If not container name is specifeid the default container is used.
-
-Usage:
+### List blobs
 ```csharp
-   var file = await _service.GetBlobContentsAsync("file.txt", containerName);
-   var azureStream = file.Content;
+//Lists all files inside the specified container or if not specified the default container.
+IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null);
 
-   await using var outputStream = File.Create("file.txt");
-   CopyStream(azureStream, outputStream);
+public class BlobInfoContract
+{
+    public string Name { get; set; }
+    public string BlobType { get; set; }
+    public string ContentEncoding { get; set; }
+    public string ContentType { get; set; }
+    public long? Size { get; set; }
+    public DateTimeOffset? DateCreated { get; set; }
+    public string AccessTier { get; set; }
+}
 ```
 
-Note: The BlobContract contains all fields of BlobInfoContract + Content with a read stream.
-
-##### Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null);
-Upload a file to the specified container or the default container if not specified.
-
-Usage:
+Example:
 ```csharp
-   await _service.CreateContainerIfNotExistsAsync(containerName);
+var files = await _service.ListBlobsInContainerAsync(containerName).ToListAsync(); // with nuget package System.Linq.Async
 
-   await using var inputStream = new FileStream("file.txt", FileMode.Open, FileAccess.Read);
-   await _service.UploadBlobAsync("file.txt", "text/plain", inputStream, containerName);
+foreach (var f in files)
+{
+   Console.WriteLine(f.Name);
+}
 ```
 
-##### Task DeleteBlobAsync(string blobName, string containerName = null);
-Deletes a file from the specified container or the default container if not specified.
+### Get blob
+```csharp
+//Get the blob content. If not container name is specifeid the default container is used.
+//Note: The BlobContract contains all fields of BlobInfoContract + Content with a read stream.
+Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
+```
+
+Example:
+```csharp
+var file = await _service.GetBlobContentsAsync("file.txt", containerName);
+var azureStream = file.Content;
+
+await using var outputStream = File.Create("file.txt");
+CopyStream(azureStream, outputStream);
+```
+
+### Delete blob
+```csharp
+//Deletes a file from the specified container or the default container if not specified.
+Task DeleteBlobAsync(string blobName, string containerName = null);
+```
+
+### Create container
+```csharp
+//Creates a container with the specified name or if no container name is specified the default container.
+Task CreateContainerIfNotExistsAsync(string containerName = null);
+```
+
+### Get container list
+```csharp
+//Returns a list of containers that are currently configured in the storage account
+IAsyncEnumerable<StorageContainerContract> GetContainersAsync();
+```
+
+### Delete container
+```csharp
+//Deletes a specified container or if no container name is specified the default container.
+Task DeleteContainerAsync(string containerName = null);
+```
+
+### Get StorageAccount
+```csharp
+//Returns the name of the storage account. This is the name configured in the connection string.
+string GetStorageAccountName()
+```
 
 ### Connect to multiple storages
 
