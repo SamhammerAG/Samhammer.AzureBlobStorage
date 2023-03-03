@@ -51,10 +51,10 @@ namespace Samhammer.AzureBlobStorage.Services
             await containerClient.DeleteAsync();
         }
 
-        public async IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null)
+        public async IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null, string folderName = null)
         {
             var containerClient = await GetContainerClient(containerName);
-            var blobs = containerClient.GetBlobsAsync();
+            var blobs = containerClient.GetBlobsAsync(prefix: folderName);
 
             await foreach (var blob in blobs)
             {
@@ -74,13 +74,19 @@ namespace Samhammer.AzureBlobStorage.Services
             return ContractMapper.ToBlobContract(blobClient.Name, properties, stream);
         }
 
-        public async Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null)
+        public async Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null)
         {
             var containerClient = await GetContainerClient(containerName);
-            var blobClient = await GetBlobClient(containerClient, blobName, true);
+            var blobClient = await GetBlobClient(containerClient, GetBlobPath(folderName, blobName), true);
 
             var options = new BlobUploadOptions() { HttpHeaders = new BlobHttpHeaders() { ContentType = contentType } };
             await blobClient.UploadAsync(content, options);
+        }
+
+        private string GetBlobPath(string folderName, string blobName)
+        {
+            var folder = string.IsNullOrWhiteSpace(folderName) ? string.Empty : $"{folderName}/";
+            return $"{folder}{blobName}";
         }
 
         public async Task DeleteBlobAsync(string blobName, string containerName = null)
@@ -89,6 +95,17 @@ namespace Samhammer.AzureBlobStorage.Services
             var blobClient = await GetBlobClient(containerClient, blobName);
 
             await blobClient.DeleteAsync();
+        }
+
+        public async Task DeleteFolderAsync(string folderName, string containerName = null)
+        {
+            var containerClient = await GetContainerClient(containerName);
+            var blobs = containerClient.GetBlobsAsync(prefix: folderName);
+
+            await foreach (var blob in blobs)
+            {
+                await DeleteBlobAsync(blob.Name, containerName);
+            }
         }
 
         public async Task<BlobContainerClient> GetContainerClient(string containerName = null, bool ignoreNonExistentContainer = false)
@@ -128,13 +145,15 @@ namespace Samhammer.AzureBlobStorage.Services
 
         public Task DeleteContainerAsync(string containerName = null);
 
-        public IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null);
+        public IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null, string folderName = null);
 
         public Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
 
-        public Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null);
+        public Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null);
 
         public Task DeleteBlobAsync(string blobName, string containerName = null);
+
+        public Task DeleteFolderAsync(string folderName, string containerName = null);
     }
 
     public interface IAzureBlobStorageService<T> : IAzureBlobStorageService where T : IAzureBlobStorageClientFactory
