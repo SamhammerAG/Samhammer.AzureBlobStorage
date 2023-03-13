@@ -37,8 +37,8 @@ Here are some examples how to use the IAzureBlobStorageService in your project.
 
 ### Upload blob
 ```csharp
-//Upload a file to the specified container or the default container if not specified.
-Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null);
+//Upload a file to the specified container or the default container if not specified and to root if no folder name is specified.
+Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null);
 ```
 
 Example:
@@ -51,8 +51,8 @@ await _service.UploadBlobAsync("file.txt", "text/plain", inputStream, containerN
 
 ### List blobs
 ```csharp
-//Lists all files inside the specified container or if not specified the default container.
-IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null);
+//Lists all files inside the specified container or if not specified the default container. Lists files inside of a folder if folder name is specified.
+IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null, string folderName = null);
 
 public class BlobInfoContract
 {
@@ -78,7 +78,7 @@ foreach (var f in files)
 
 ### Get blob
 ```csharp
-//Get the blob content. If not container name is specifeid the default container is used.
+//Get the blob content. If no container name is specifeid the default container is used.
 Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
 
 public class BlobContract : BlobInfoContract
@@ -100,6 +100,12 @@ CopyStream(azureStream, outputStream);
 ```csharp
 //Deletes a file from the specified container or the default container if not specified.
 Task DeleteBlobAsync(string blobName, string containerName = null);
+```
+
+### Delete folder
+```csharp
+//Deletes all files from the specified container or the default container if not specified inside of a specific folder.
+Task DeleteFolderAsync(string folderName, string containerName = null);
 ```
 
 ### Create container
