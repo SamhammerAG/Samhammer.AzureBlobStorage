@@ -20,7 +20,7 @@ namespace Samhammer.AzureBlobStorage.Client
 
         public string GetDefaultContainerName()
         {
-            return Options.Value.ContainerName;
+            return Options.Value.ContainerName.ToLower();
         }
     }
 
