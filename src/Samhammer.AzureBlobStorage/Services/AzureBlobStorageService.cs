@@ -69,7 +69,9 @@ namespace Samhammer.AzureBlobStorage.Services
             var blobClient = await GetBlobClient(containerClient, blobName);
 
             var properties = (await blobClient.GetPropertiesAsync()).Value;
-            var stream = await blobClient.OpenReadAsync();
+            var stream = StreamHelper.StreamManager.GetStream();
+            await blobClient.DownloadToAsync(stream);
+            stream.Position = 0;
 
             return ContractMapper.ToBlobContract(blobClient.Name, properties, stream);
         }
