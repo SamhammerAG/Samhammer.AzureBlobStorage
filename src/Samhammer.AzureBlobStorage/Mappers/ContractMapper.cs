@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Azure.Storage.Blobs.Models;
 using Samhammer.AzureBlobStorage.Contracts;
 
@@ -34,6 +35,21 @@ namespace Samhammer.AzureBlobStorage.Mappers
                 AccessTier = properties.AccessTier,
                 BlobType = properties.BlobType.ToString(),
                 Content = stream,
+            };
+        }
+
+        public static BlobUrlContract ToBlobUrlContract(string name, BlobProperties properties, Uri uri)
+        {
+            return new BlobUrlContract()
+            {
+                Name = name,
+                ContentEncoding = properties.ContentEncoding ?? string.Empty,
+                ContentType = properties.ContentType,
+                Size = properties.ContentLength,
+                DateCreated = properties.CreatedOn,
+                AccessTier = properties.AccessTier,
+                BlobType = properties.BlobType.ToString(),
+                FileUrl = uri.AbsoluteUri,
             };
         }
     }

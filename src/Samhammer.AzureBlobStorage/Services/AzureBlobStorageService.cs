@@ -4,6 +4,8 @@ using System.IO;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
+using Azure.Storage.Sas;
 using Samhammer.AzureBlobStorage.Client;
 using Samhammer.AzureBlobStorage.Contracts;
 using Samhammer.AzureBlobStorage.Mappers;
@@ -76,6 +78,17 @@ namespace Samhammer.AzureBlobStorage.Services
             return ContractMapper.ToBlobContract(blobClient.Name, properties, stream);
         }
 
+        public async Task<BlobUrlContract> GetBlobUrlAsync(string blobName, DateTimeOffset expiresOn, string containerName = null)
+        {
+            var containerClient = await GetContainerClient(containerName);
+            var blobClient = await GetBlobClient(containerClient, blobName);
+
+            var properties = (await blobClient.GetPropertiesAsync()).Value;
+            var uri = CreateServiceSASBlob(blobClient, expiresOn);
+
+            return ContractMapper.ToBlobUrlContract(blobClient.Name, properties, uri);
+        }
+
         public async Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null)
         {
             var containerClient = await GetContainerClient(containerName);
@@ -83,6 +96,40 @@ namespace Samhammer.AzureBlobStorage.Services
 
             var options = new BlobUploadOptions() { HttpHeaders = new BlobHttpHeaders() { ContentType = contentType } };
             await blobClient.UploadAsync(content, options);
+        }
+
+        private Uri CreateServiceSASBlob(
+            BlobClient blobClient,
+            DateTimeOffset expiresOn,
+            string storedPolicyName = null)
+        {
+            if (blobClient.CanGenerateSasUri)
+            {
+                BlobSasBuilder sasBuilder = new BlobSasBuilder()
+                {
+                    BlobContainerName = blobClient.GetParentBlobContainerClient().Name,
+                    BlobName = blobClient.Name,
+                    Resource = "b",
+                };
+
+                if (storedPolicyName == null)
+                {
+                    sasBuilder.ExpiresOn = expiresOn;
+                    sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
+                }
+                else
+                {
+                    sasBuilder.Identifier = storedPolicyName;
+                }
+
+                Uri sasURI = blobClient.GenerateSasUri(sasBuilder);
+
+                return sasURI;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         private string GetBlobPath(string folderName, string blobName)
@@ -150,6 +197,8 @@ namespace Samhammer.AzureBlobStorage.Services
         public IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null, string folderName = null);
 
         public Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
+
+        public Task<BlobUrlContract> GetBlobUrlAsync(string blobName, DateTimeOffset expiresOn, string containerName = null);
 
         public Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null);
 
