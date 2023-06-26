@@ -21,7 +21,19 @@ builder.Services.AddHealthChecks().AddDefaultAzureBlobStorage()
 ```json
 "AzureBlobStorageOptions": {
   "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=xxxxxx;AccountKey=xxxxxx;EndpointSuffix=core.windows.net",
-  "ContainerName": "DefaultContainerName"
+  "ContainerName": "DefaultContainerName",
+  //The time for expiring the SAS url download file.
+  //Format value is "d.HH:mm".
+  "FileUrlExpires ": "1.00:00",
+},
+```
+```json
+//Reference https://github.com/microsoft/Microsoft.IO.RecyclableMemoryStream.
+"StreamManagerOptions": {
+  //Maximum number of bytes to keep available in the small pool before future buffers get dropped for garbage collection.
+  "MaxSmallPoolFreeBytes": 1000000,
+  //Maximum number of bytes to keep available in the large pool before future buffers get dropped for garbage collection.
+  "MaxLargePoolFreeBytes": 10000000,
 },
 ```
 
