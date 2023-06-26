@@ -1,4 +1,6 @@
-﻿namespace Samhammer.AzureBlobStorage.Options
+﻿using System;
+
+namespace Samhammer.AzureBlobStorage.Options
 {
     public class AzureBlobStorageOptions
     {
@@ -6,6 +8,6 @@
 
         public string ContainerName { get; set; }
 
-        public int FileUrlExpiresByDays { get; set; } = 1;
+        public TimeSpan? FileUrlExpires { get; set; }
     }
 }

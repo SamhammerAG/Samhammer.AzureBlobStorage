@@ -38,8 +38,9 @@ namespace Samhammer.AzureBlobStorage.Test
             clientFactory.GetDefaultContainerName().Returns(DefaultContainerName);
             clientFactory.GetClient().Returns(new BlobServiceClient(ConnectionString));
             var options = Substitute.For<IOptions<AzureBlobStorageOptions>>();
+            var streamManagerService = Substitute.For<IStreamManagerService>();
 
-            _service = new AzureBlobStorageService<IAzureBlobStorageClientFactory>(clientFactory, options);
+            _service = new AzureBlobStorageService<IAzureBlobStorageClientFactory>(clientFactory, streamManagerService, options);
 
             _comparisonOptions = o => o
                 .Using<DateTimeOffset>(ctx =>

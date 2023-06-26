@@ -12,6 +12,7 @@ namespace Samhammer.AzureBlobStorage
         public static IServiceCollection AddDefaultAzureBlobStorage(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<AzureBlobStorageOptions>(configuration.GetSection(nameof(AzureBlobStorageOptions)));
+            services.Configure<StreamManagerOptions>(configuration.GetSection(nameof(StreamManagerOptions)));
 
             RegisterAzureBlobStorage<IDefaultAzureBlobStorageClientFactory, DefaultAzureBlobStorageClientFactory>(services, true);
 
@@ -42,6 +43,7 @@ namespace Samhammer.AzureBlobStorage
         {
             services.AddSingleton<TFactoryInterface, TFactoryImpl>();
             services.AddSingleton<IAzureBlobStorageService<TFactoryInterface>, AzureBlobStorageService<TFactoryInterface>>();
+            services.AddSingleton<IStreamManagerService, StreamManagerService>();
 
             if (registerAsDefault)
             {

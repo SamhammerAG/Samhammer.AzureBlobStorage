@@ -22,11 +22,14 @@ namespace Samhammer.AzureBlobStorage.Services
 
         private readonly AzureBlobStorageOptions _blobStorageOptions;
 
-        public AzureBlobStorageService(T blobStorageClientFactory, IOptions<AzureBlobStorageOptions> blobStorageOptions)
+        private readonly IStreamManagerService _streamManagerService;
+
+        public AzureBlobStorageService(T blobStorageClientFactory, IStreamManagerService streamManagerService, IOptions<AzureBlobStorageOptions> blobStorageOptions)
         {
             _defaultContainerName = blobStorageClientFactory.GetDefaultContainerName();
             _client = blobStorageClientFactory.GetClient();
             _blobStorageOptions = blobStorageOptions.Value;
+            _streamManagerService = streamManagerService;
         }
 
         public string GetStorageAccountName()
@@ -76,7 +79,7 @@ namespace Samhammer.AzureBlobStorage.Services
             var blobClient = await GetBlobClient(containerClient, blobName);
 
             var properties = (await blobClient.GetPropertiesAsync()).Value;
-            var stream = StreamHelper.StreamManager.GetStream();
+            var stream = _streamManagerService.GetStream();
             await blobClient.DownloadToAsync(stream);
             stream.Position = 0;
 
@@ -117,7 +120,10 @@ namespace Samhammer.AzureBlobStorage.Services
                 Resource = "b",
             };
 
-            sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddDays(_blobStorageOptions.FileUrlExpiresByDays);
+            sasBuilder.ExpiresOn = _blobStorageOptions.FileUrlExpires.HasValue 
+                ? DateTimeOffset.UtcNow.Add(_blobStorageOptions.FileUrlExpires.Value)
+                : DateTimeOffset.UtcNow.AddDays(1);
+
             sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
 
             Uri sasURI = blobClient.GenerateSasUri(sasBuilder);
