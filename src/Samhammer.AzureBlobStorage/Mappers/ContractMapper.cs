@@ -37,20 +37,5 @@ namespace Samhammer.AzureBlobStorage.Mappers
                 Content = stream,
             };
         }
-
-        public static BlobUrlContract ToBlobUrlContract(string name, BlobProperties properties, Uri uri)
-        {
-            return new BlobUrlContract()
-            {
-                Name = name,
-                ContentEncoding = properties.ContentEncoding ?? string.Empty,
-                ContentType = properties.ContentType,
-                Size = properties.ContentLength,
-                DateCreated = properties.CreatedOn,
-                AccessTier = properties.AccessTier,
-                BlobType = properties.BlobType.ToString(),
-                FileUrl = uri.AbsoluteUri,
-            };
-        }
     }
 }

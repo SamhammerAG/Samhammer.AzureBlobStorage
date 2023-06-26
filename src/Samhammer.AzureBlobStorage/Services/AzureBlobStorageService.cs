@@ -86,15 +86,14 @@ namespace Samhammer.AzureBlobStorage.Services
             return ContractMapper.ToBlobContract(blobClient.Name, properties, stream);
         }
 
-        public async Task<BlobUrlContract> GetBlobUrlAsync(string blobName, string containerName = null)
+        public async Task<string> GetBlobUrlAsync(string blobName, string containerName = null)
         {
             var containerClient = await GetContainerClient(containerName);
             var blobClient = await GetBlobClient(containerClient, blobName);
 
-            var properties = (await blobClient.GetPropertiesAsync()).Value;
             var uri = CreateServiceSASBlob(blobClient);
 
-            return ContractMapper.ToBlobUrlContract(blobClient.Name, properties, uri);
+            return uri.AbsoluteUri;
         }
 
         public async Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null)
@@ -197,7 +196,7 @@ namespace Samhammer.AzureBlobStorage.Services
 
         public Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
 
-        public Task<BlobUrlContract> GetBlobUrlAsync(string blobName, string containerName = null);
+        public Task<string> GetBlobUrlAsync(string blobName, string containerName = null);
 
         public Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null);
 
