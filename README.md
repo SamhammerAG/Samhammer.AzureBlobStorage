@@ -22,8 +22,8 @@ builder.Services.AddHealthChecks().AddDefaultAzureBlobStorage()
 "AzureBlobStorageOptions": {
   "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=xxxxxx;AccountKey=xxxxxx;EndpointSuffix=core.windows.net",
   "ContainerName": "DefaultContainerName",
-  //The time for expiring the SAS url download file. Format value is "d.HH:mm:ss". Default is 1 day.
-  "FileUrlExpires ": "1.00:00:00",
+  //The time for expiring the SAS url download file. Format value is "d.HH:mm". Default is 1 day.
+  "FileUrlExpires ": "1.00:00",
 },
 ```
 ```json
