@@ -12,6 +12,8 @@ using FluentAssertions;
 using FluentAssertions.Equivalency;
 using Samhammer.AzureBlobStorage.Contracts;
 using Xunit;
+using Microsoft.Extensions.Options;
+using Samhammer.AzureBlobStorage.Options;
 
 namespace Samhammer.AzureBlobStorage.Test
 {
@@ -35,8 +37,10 @@ namespace Samhammer.AzureBlobStorage.Test
             var clientFactory = Substitute.For<IAzureBlobStorageClientFactory>();
             clientFactory.GetDefaultContainerName().Returns(DefaultContainerName);
             clientFactory.GetClient().Returns(new BlobServiceClient(ConnectionString));
+            var options = Substitute.For<IOptions<AzureBlobStorageOptions>>();
+            var streamManagerService = Substitute.For<IStreamManagerService>();
 
-            _service = new AzureBlobStorageService<IAzureBlobStorageClientFactory>(clientFactory);
+            _service = new AzureBlobStorageService<IAzureBlobStorageClientFactory>(clientFactory, streamManagerService, options);
 
             _comparisonOptions = o => o
                 .Using<DateTimeOffset>(ctx =>

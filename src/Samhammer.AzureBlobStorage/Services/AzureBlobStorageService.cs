@@ -4,9 +4,13 @@ using System.IO;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
+using Azure.Storage.Sas;
+using Microsoft.Extensions.Options;
 using Samhammer.AzureBlobStorage.Client;
 using Samhammer.AzureBlobStorage.Contracts;
 using Samhammer.AzureBlobStorage.Mappers;
+using Samhammer.AzureBlobStorage.Options;
 
 namespace Samhammer.AzureBlobStorage.Services
 {
@@ -16,10 +20,16 @@ namespace Samhammer.AzureBlobStorage.Services
 
         private readonly BlobServiceClient _client;
 
-        public AzureBlobStorageService(T blobStorageClientFactory)
+        private readonly IOptions<AzureBlobStorageOptions> _blobStorageOptions;
+
+        private readonly IStreamManagerService _streamManagerService;
+
+        public AzureBlobStorageService(T blobStorageClientFactory, IStreamManagerService streamManagerService, IOptions<AzureBlobStorageOptions> blobStorageOptions)
         {
             _defaultContainerName = blobStorageClientFactory.GetDefaultContainerName();
             _client = blobStorageClientFactory.GetClient();
+            _blobStorageOptions = blobStorageOptions;
+            _streamManagerService = streamManagerService;
         }
 
         public string GetStorageAccountName()
@@ -69,9 +79,21 @@ namespace Samhammer.AzureBlobStorage.Services
             var blobClient = await GetBlobClient(containerClient, blobName);
 
             var properties = (await blobClient.GetPropertiesAsync()).Value;
-            var stream = await blobClient.OpenReadAsync();
+            var stream = _streamManagerService.GetStream();
+            await blobClient.DownloadToAsync(stream);
+            stream.Position = 0;
 
             return ContractMapper.ToBlobContract(blobClient.Name, properties, stream);
+        }
+
+        public async Task<string> GetBlobUrlAsync(string blobName, string containerName = null)
+        {
+            var containerClient = await GetContainerClient(containerName);
+            var blobClient = await GetBlobClient(containerClient, blobName);
+
+            var uri = CreateServiceSASBlob(blobClient);
+
+            return uri.AbsoluteUri;
         }
 
         public async Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null)
@@ -81,6 +103,31 @@ namespace Samhammer.AzureBlobStorage.Services
 
             var options = new BlobUploadOptions() { HttpHeaders = new BlobHttpHeaders() { ContentType = contentType } };
             await blobClient.UploadAsync(content, options);
+        }
+
+        private Uri CreateServiceSASBlob(BlobClient blobClient)
+        {
+            if (!blobClient.CanGenerateSasUri)
+            {
+                return null;
+            }
+
+            BlobSasBuilder sasBuilder = new BlobSasBuilder()
+            {
+                BlobContainerName = blobClient.GetParentBlobContainerClient().Name,
+                BlobName = blobClient.Name,
+                Resource = "b",
+            };
+
+            sasBuilder.ExpiresOn = _blobStorageOptions.Value.FileUrlExpires.HasValue 
+                ? DateTimeOffset.UtcNow.Add(_blobStorageOptions.Value.FileUrlExpires.Value)
+                : DateTimeOffset.UtcNow.AddDays(1);
+
+            sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
+
+            Uri sasURI = blobClient.GenerateSasUri(sasBuilder);
+
+            return sasURI;
         }
 
         private string GetBlobPath(string folderName, string blobName)
@@ -148,6 +195,8 @@ namespace Samhammer.AzureBlobStorage.Services
         public IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null, string folderName = null);
 
         public Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
+
+        public Task<string> GetBlobUrlAsync(string blobName, string containerName = null);
 
         public Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null);
 
