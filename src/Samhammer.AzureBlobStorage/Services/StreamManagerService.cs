@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Threading;
 using Microsoft.Extensions.Options;
 using Microsoft.IO;
 using Samhammer.AzureBlobStorage.Options;
@@ -11,19 +12,37 @@ namespace Samhammer.AzureBlobStorage.Services
 
         private const long MaxLargePoolFreeBytes = 10000000;
 
-        private readonly RecyclableMemoryStreamManager _streamManager;
+        private IOptions<StreamManagerOptions> StreamManagerOptions { get; }
+
+        private static RecyclableMemoryStreamManager streamManager;
+
+        private static bool initialized;
+
+        private static object initializeLock = new object();
 
         public StreamManagerService(IOptions<StreamManagerOptions> streamManagerOptions)
         {
-            StreamManagerOptions options = streamManagerOptions.Value;
-            _streamManager = new RecyclableMemoryStreamManager(
-                options.MaxSmallPoolFreeBytes.HasValue ? options.MaxSmallPoolFreeBytes.Value : MaxSmallPoolFreeBytes,
-                options.MaxLargePoolFreeBytes.HasValue ? options.MaxLargePoolFreeBytes.Value : MaxLargePoolFreeBytes);
+            StreamManagerOptions = streamManagerOptions;
+        }
+
+        public RecyclableMemoryStreamManager GetStreamManager()
+        {
+            return LazyInitializer.EnsureInitialized(ref streamManager, ref initialized, ref initializeLock, InitStreamManager);
+        }
+
+        public RecyclableMemoryStreamManager InitStreamManager()
+        {
+            var streamManager = new RecyclableMemoryStreamManager(
+                StreamManagerOptions.Value.MaxSmallPoolFreeBytes ?? MaxSmallPoolFreeBytes,
+                StreamManagerOptions.Value.MaxLargePoolFreeBytes ?? MaxLargePoolFreeBytes);
+
+            return streamManager;
         }
 
         public MemoryStream GetStream()
         {
-            return _streamManager.GetStream();
+            var streamManager = GetStreamManager();
+            return streamManager.GetStream();
         }
     }
 
