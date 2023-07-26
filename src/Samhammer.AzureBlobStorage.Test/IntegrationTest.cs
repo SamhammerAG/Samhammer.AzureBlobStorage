@@ -38,7 +38,10 @@ namespace Samhammer.AzureBlobStorage.Test
             clientFactory.GetDefaultContainerName().Returns(DefaultContainerName);
             clientFactory.GetClient().Returns(new BlobServiceClient(ConnectionString));
             var options = Substitute.For<IOptions<AzureBlobStorageOptions>>();
-            var streamManagerService = Substitute.For<IStreamManagerService>();
+
+            var streamManagerOptions = new StreamManagerOptions();
+            var iOptionsStreamManager = Microsoft.Extensions.Options.Options.Create(streamManagerOptions);
+            var streamManagerService = new StreamManagerService(iOptionsStreamManager);
 
             _service = new AzureBlobStorageService<IAzureBlobStorageClientFactory>(clientFactory, streamManagerService, options);
 
@@ -129,6 +132,54 @@ namespace Samhammer.AzureBlobStorage.Test
 
             filesAfterDeletion.Count.Should().Be(0);
 
+            // Delete folder and verify only folder with prefix is gone, others kept
+            testFileReadStream.Seek(0, SeekOrigin.Begin);
+            await _service.UploadBlobAsync(testFileName, testFileContentType, testFileReadStream, containerName, "1");
+            testFileReadStream.Seek(0, SeekOrigin.Begin);
+            await _service.UploadBlobAsync(testFileName, testFileContentType, testFileReadStream, containerName, "10");
+            testFileReadStream.Seek(0, SeekOrigin.Begin);
+            await _service.UploadBlobAsync(testFileName, testFileContentType, testFileReadStream, containerName, "11");
+            await _service.DeleteFolderAsync("1", containerName);
+
+            var filesAfterFolderDeletion = await _service.ListBlobsInContainerAsync(containerName).ToListAsync();
+
+            filesAfterFolderDeletion.Should().ContainEquivalentOf(
+                    new BlobInfoContract
+                    {
+                        Name = "10/" + testFileName,
+                        AccessTier = "Hot",
+                        BlobType = "Block",
+                        ContentEncoding = string.Empty,
+                        ContentType = testFileContentType,
+                        DateCreated = DateTimeOffset.UtcNow,
+                        Size = 1021702,
+                    }, 
+                    _comparisonOptions)
+                .And.ContainEquivalentOf(
+                    new BlobInfoContract
+                    {
+                        Name = "11/" + testFileName,
+                        AccessTier = "Hot",
+                        BlobType = "Block",
+                        ContentEncoding = string.Empty,
+                        ContentType = testFileContentType,
+                        DateCreated = DateTimeOffset.UtcNow,
+                        Size = 1021702,
+                    }, 
+                    _comparisonOptions)
+                .And.NotContainEquivalentOf(
+                    new BlobInfoContract
+                    {
+                        Name = "1/" + testFileName,
+                        AccessTier = "Hot",
+                        BlobType = "Block",
+                        ContentEncoding = string.Empty,
+                        ContentType = testFileContentType,
+                        DateCreated = DateTimeOffset.UtcNow,
+                        Size = 1021702,
+                    }, 
+                    _comparisonOptions);
+            
             // Delete container and verify it's gone
             await _service.DeleteContainerAsync(containerName);
             var containersAfterDeletion = await _service.GetContainersAsync().ToListAsync();
