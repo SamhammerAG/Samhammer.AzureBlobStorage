@@ -119,7 +119,7 @@ namespace Samhammer.AzureBlobStorage.Services
                 Resource = "b",
             };
 
-            sasBuilder.ExpiresOn = _blobStorageOptions.Value.FileUrlExpires.HasValue 
+            sasBuilder.ExpiresOn = _blobStorageOptions.Value.FileUrlExpires.HasValue
                 ? DateTimeOffset.UtcNow.Add(_blobStorageOptions.Value.FileUrlExpires.Value)
                 : DateTimeOffset.UtcNow.AddDays(1);
 
@@ -147,7 +147,8 @@ namespace Samhammer.AzureBlobStorage.Services
         public async Task DeleteFolderAsync(string folderName, string containerName = null)
         {
             var containerClient = await GetContainerClient(containerName);
-            var blobs = containerClient.GetBlobsAsync(prefix: folderName);
+            folderName = folderName.TrimEnd('/');
+            var blobs = containerClient.GetBlobsAsync(prefix: $"{folderName}/");
 
             await foreach (var blob in blobs)
             {
