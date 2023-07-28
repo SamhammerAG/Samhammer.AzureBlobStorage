@@ -141,7 +141,7 @@ namespace Samhammer.AzureBlobStorage.Services
             var containerClient = await GetContainerClient(containerName);
             var blobClient = await GetBlobClient(containerClient, blobName);
 
-            await blobClient.DeleteAsync();
+            await blobClient.DeleteAsync(DeleteSnapshotsOption.IncludeSnapshots);
         }
 
         public async Task DeleteFolderAsync(string folderName, string containerName = null)
