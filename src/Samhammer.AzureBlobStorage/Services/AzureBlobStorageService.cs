@@ -195,9 +195,9 @@ namespace Samhammer.AzureBlobStorage.Services
 
         public IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null, string folderName = null);
 
-        public Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null);
+        public Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null, bool ignoreNonExistentContainer = false);
 
-        public Task<string> GetBlobUrlAsync(string blobName, string containerName = null);
+        public Task<string> GetBlobUrlAsync(string blobName, string containerName = null, bool ignoreNonExistentContainer = false);
 
         public Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null);
 
