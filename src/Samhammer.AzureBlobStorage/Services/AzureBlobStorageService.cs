@@ -170,6 +170,13 @@ namespace Samhammer.AzureBlobStorage.Services
             return containerClient;
         }
 
+        public async Task<bool> BlobExistsAsync(string blobName, string containerName = null)
+        {
+            var containerClient = await GetContainerClient(containerName);
+            var blobClient = containerClient.GetBlobClient(blobName);
+            return await blobClient.ExistsAsync();
+        }
+
         private async Task<BlobClient> GetBlobClient(BlobContainerClient containerClient, string blobName, bool ignoreNonExistentBlob = false)
         {
             var blobClient = containerClient.GetBlobClient(blobName);
@@ -204,6 +211,8 @@ namespace Samhammer.AzureBlobStorage.Services
         public Task DeleteBlobAsync(string blobName, string containerName = null);
 
         public Task DeleteFolderAsync(string folderName, string containerName = null);
+
+        public Task<bool> BlobExistsAsync(string blobName, string containerName = null);
     }
 
     public interface IAzureBlobStorageService<T> : IAzureBlobStorageService where T : IAzureBlobStorageClientFactory
