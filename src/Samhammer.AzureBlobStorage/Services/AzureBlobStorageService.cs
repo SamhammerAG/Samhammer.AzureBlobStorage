@@ -91,7 +91,7 @@ namespace Samhammer.AzureBlobStorage.Services
             var containerClient = await GetContainerClient(containerName, ignoreNonExistentContainer);
             var blobClient = await GetBlobClient(containerClient, blobName, ignoreNonExistentContainer);
 
-            var uri = CreateServiceSASBlob(blobClient);
+            var uri = CreateServiceSasBlob(blobClient);
 
             return uri.AbsoluteUri;
         }
@@ -105,7 +105,7 @@ namespace Samhammer.AzureBlobStorage.Services
             await blobClient.UploadAsync(content, options);
         }
 
-        private Uri CreateServiceSASBlob(BlobClient blobClient)
+        private Uri CreateServiceSasBlob(BlobClient blobClient)
         {
             if (!blobClient.CanGenerateSasUri)
             {
@@ -125,9 +125,9 @@ namespace Samhammer.AzureBlobStorage.Services
 
             sasBuilder.SetPermissions(BlobContainerSasPermissions.Read);
 
-            Uri sasURI = blobClient.GenerateSasUri(sasBuilder);
+            Uri sasUri = blobClient.GenerateSasUri(sasBuilder);
 
-            return sasURI;
+            return sasUri;
         }
 
         private string GetBlobPath(string folderName, string blobName)

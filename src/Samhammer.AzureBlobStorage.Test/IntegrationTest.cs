@@ -153,7 +153,7 @@ namespace Samhammer.AzureBlobStorage.Test
                         ContentType = testFileContentType,
                         DateCreated = DateTimeOffset.UtcNow,
                         Size = 1021702,
-                    }, 
+                    },
                     _comparisonOptions)
                 .And.ContainEquivalentOf(
                     new BlobInfoContract
@@ -165,7 +165,7 @@ namespace Samhammer.AzureBlobStorage.Test
                         ContentType = testFileContentType,
                         DateCreated = DateTimeOffset.UtcNow,
                         Size = 1021702,
-                    }, 
+                    },
                     _comparisonOptions)
                 .And.NotContainEquivalentOf(
                     new BlobInfoContract
@@ -177,9 +177,9 @@ namespace Samhammer.AzureBlobStorage.Test
                         ContentType = testFileContentType,
                         DateCreated = DateTimeOffset.UtcNow,
                         Size = 1021702,
-                    }, 
+                    },
                     _comparisonOptions);
-            
+
             // Delete container and verify it's gone
             await _service.DeleteContainerAsync(containerName);
             var containersAfterDeletion = await _service.GetContainersAsync().ToListAsync();

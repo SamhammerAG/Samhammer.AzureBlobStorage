@@ -14,11 +14,11 @@ namespace Samhammer.AzureBlobStorage.Services
 
         private IOptions<StreamManagerOptions> StreamManagerOptions { get; }
 
-        private static RecyclableMemoryStreamManager streamManager;
+        private static RecyclableMemoryStreamManager _streamManager;
 
-        private static bool initialized;
+        private static bool _initialized;
 
-        private static object initializeLock = new object();
+        private static object _initializeLock = new object();
 
         public StreamManagerService(IOptions<StreamManagerOptions> streamManagerOptions)
         {
@@ -27,22 +27,23 @@ namespace Samhammer.AzureBlobStorage.Services
 
         public RecyclableMemoryStreamManager GetStreamManager()
         {
-            return LazyInitializer.EnsureInitialized(ref streamManager, ref initialized, ref initializeLock, InitStreamManager);
+            return LazyInitializer.EnsureInitialized(ref _streamManager, ref _initialized, ref _initializeLock, InitStreamManager);
         }
 
         public RecyclableMemoryStreamManager InitStreamManager()
         {
-            var streamManager = new RecyclableMemoryStreamManager(
-                StreamManagerOptions.Value.MaxSmallPoolFreeBytes ?? MaxSmallPoolFreeBytes,
-                StreamManagerOptions.Value.MaxLargePoolFreeBytes ?? MaxLargePoolFreeBytes);
-
-            return streamManager;
+            var options = new RecyclableMemoryStreamManager.Options
+            {
+                MaximumLargePoolFreeBytes = StreamManagerOptions.Value.MaxLargePoolFreeBytes ?? MaxLargePoolFreeBytes,
+                MaximumSmallPoolFreeBytes = StreamManagerOptions.Value.MaxSmallPoolFreeBytes ?? MaxSmallPoolFreeBytes,
+            };
+            return new RecyclableMemoryStreamManager(options);
         }
 
         public MemoryStream GetStream()
         {
-            var streamManager = GetStreamManager();
-            return streamManager.GetStream();
+            var sm = GetStreamManager();
+            return sm.GetStream();
         }
     }
 

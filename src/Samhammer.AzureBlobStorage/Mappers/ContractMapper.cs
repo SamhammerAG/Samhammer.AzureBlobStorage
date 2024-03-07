@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Azure.Storage.Blobs.Models;
 using Samhammer.AzureBlobStorage.Contracts;
 
