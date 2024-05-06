@@ -64,13 +64,20 @@ namespace Samhammer.AzureBlobStorage.Services
         public async IAsyncEnumerable<BlobInfoContract> ListBlobsInContainerAsync(string containerName = null, string folderName = null)
         {
             var containerClient = await GetContainerClient(containerName);
-            var blobs = containerClient.GetBlobsAsync(prefix: folderName);
+            var folderNamePrefix = GetFolderNamePrefix(folderName);
+
+            var blobs = containerClient.GetBlobsAsync(prefix: folderNamePrefix);
 
             await foreach (var blob in blobs)
             {
                 var model = ContractMapper.ToBlobInfoContract(blob);
                 yield return model;
             }
+        }
+
+        private string GetFolderNamePrefix(string folderName)
+        {
+            return string.IsNullOrEmpty(folderName) ? folderName : $"{folderName.TrimEnd('/')}/";
         }
 
         public async Task<BlobContract> GetBlobContentsAsync(string blobName, string containerName = null, bool ignoreNonExistentContainer = false)
@@ -147,8 +154,8 @@ namespace Samhammer.AzureBlobStorage.Services
         public async Task DeleteFolderAsync(string folderName, string containerName = null)
         {
             var containerClient = await GetContainerClient(containerName);
-            folderName = folderName.TrimEnd('/');
-            var blobs = containerClient.GetBlobsAsync(prefix: $"{folderName}/");
+            var folderNamePrefix = GetFolderNamePrefix(folderName);
+            var blobs = containerClient.GetBlobsAsync(prefix: folderNamePrefix);
 
             await foreach (var blob in blobs)
             {
