@@ -65,8 +65,12 @@ namespace Samhammer.AzureBlobStorage.Services
         {
             var containerClient = await GetContainerClient(containerName);
             var folderNamePrefix = GetFolderNamePrefix(folderName);
+            var getBlobOptions = new GetBlobsOptions
+            {
+                Prefix = folderNamePrefix
+            };
 
-            var blobs = containerClient.GetBlobsAsync(prefix: folderNamePrefix);
+            var blobs = containerClient.GetBlobsAsync(getBlobOptions);
 
             await foreach (var blob in blobs)
             {
@@ -155,7 +159,12 @@ namespace Samhammer.AzureBlobStorage.Services
         {
             var containerClient = await GetContainerClient(containerName);
             var folderNamePrefix = GetFolderNamePrefix(folderName);
-            var blobs = containerClient.GetBlobsAsync(prefix: folderNamePrefix);
+            var getBlobOptions = new GetBlobsOptions
+            {
+                Prefix = folderNamePrefix
+            };
+
+            var blobs = containerClient.GetBlobsAsync(getBlobOptions);
 
             await foreach (var blob in blobs)
             {

@@ -6,6 +6,7 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 charset = utf-8-bom
+dotnet_diagnostic.SA1413.severity = none
 
 [*.json]
 indent_size = 2
