@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Azure.Storage.Blobs;
-using HealthChecks.AzureStorage;
+using HealthChecks.Azure.Storage.Blobs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Samhammer.AzureBlobStorage.Client;
