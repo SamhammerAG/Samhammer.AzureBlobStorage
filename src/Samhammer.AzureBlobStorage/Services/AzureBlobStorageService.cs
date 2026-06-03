@@ -107,12 +107,16 @@ namespace Samhammer.AzureBlobStorage.Services
             return uri.AbsoluteUri;
         }
 
-        public async Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null)
+        public async Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null, IDictionary<string, string> tags = null)
         {
             var containerClient = await GetContainerClient(containerName);
             var blobClient = await GetBlobClient(containerClient, GetBlobPath(folderName, blobName), true);
 
-            var options = new BlobUploadOptions() { HttpHeaders = new BlobHttpHeaders() { ContentType = contentType } };
+            var options = new BlobUploadOptions()
+            {
+                HttpHeaders = new BlobHttpHeaders() { ContentType = contentType },
+                Tags = tags,
+            };
             await blobClient.UploadAsync(content, options);
         }
 
@@ -222,7 +226,7 @@ namespace Samhammer.AzureBlobStorage.Services
 
         public Task<string> GetBlobUrlAsync(string blobName, string containerName = null, bool ignoreNonExistentContainer = false);
 
-        public Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null);
+        public Task UploadBlobAsync(string blobName, string contentType, Stream content, string containerName = null, string folderName = null, IDictionary<string, string> tags = null);
 
         public Task DeleteBlobAsync(string blobName, string containerName = null);
 
